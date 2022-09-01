@@ -1,6 +1,22 @@
-import {useState } from "react";
+import {useEffect, useState} from "react";
+import { Navigate } from "react-router-dom";
+
+import {database} from "../../firebaseConfig";
+import {collection,getDocs} from "firebase/firestore";
+import { useCookies } from 'react-cookie';
 
 export default function Login(){
+
+    //Cookies
+    const [cookies,setCookie] = useCookies(['userId']);
+    // console.log(cookies);
+    //Database Collection
+    const collectionRef = collection(database,'Users');
+
+    //Redirect login state
+    const [redirectLogin,setRedirectLogin] = useState(false);
+
+
     const [userData, setUserData] = useState({
        email: "", password: ""
     });
@@ -30,9 +46,29 @@ export default function Login(){
 
     }
 
+
+    const [fetchedUserData,setfetchedUserData] = useState([]);
+    useEffect(()=>{
+
+        getDocs(collectionRef).then((response)=>{
+            const testarr = [];
+            response.docs.map((item)=>{
+                // const obj = item.data();
+                const obj = {...item.data(), id: item.id};
+                testarr.push(obj);
+            });
+            setfetchedUserData(testarr);
+        })
+
+
+    },[]);
+    // console.log(fetchedUserData)
+
+
+
     function handleClick(event){
         event.preventDefault();
-
+        
         // if(validator.isEmail(userData.email)){
         //     alert("The email is not valid");
         // }
@@ -40,12 +76,31 @@ export default function Login(){
         //     alert("Valid email");
         // }
 
-        console.log(userData);
+        // console.log(userData);
+        let loginStatus = false; //Login status
 
+        fetchedUserData.map((obj,i)=>{
+            if(obj.Email == userData.email && obj.Password == userData.password){
+                loginStatus = true;
+                //Insert id as cookie storage
+                console.log(obj.id);
+                setCookie('sessionId',obj.id,{path: '/'});
+
+                //Alert the user
+                alert("Login successfull");
+
+                setRedirectLogin(true);
+            }
+            if(i+1 == fetchedUserData.length && loginStatus != true){
+                alert("Wrong email or password. Try again");
+            }
+        })
     }
 
     return(
         <>
+            {redirectLogin && <Navigate to='/'/>}
+
             <form>
                 <h1>Login</h1>
 
