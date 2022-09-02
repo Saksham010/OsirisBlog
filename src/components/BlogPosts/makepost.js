@@ -3,6 +3,7 @@ import {database} from "../../firebaseConfig";
 import {collection,doc, getDoc, addDoc} from "firebase/firestore";
 import { useCookies } from 'react-cookie';
 import { Navigate } from "react-router-dom";
+import Navbar from "../Navbar/Navbar";
 
 export default function MakePost(){
 
@@ -10,36 +11,11 @@ export default function MakePost(){
     const [authorName,setAuthorName] = useState("");
     const [textData, setTextData] = useState("");
     const [redirectMainBlog,setRedirectMainBlog] = useState(false);     
-    const [blogArray, setBlogArray] = useState([]);
-
-    //Fetch blogArrayContent of the user
-    async function getBlogContentArray(){
-
-        if(cookies.sessionId != undefined && cookies.sessionId != null){
-
-            // Database Collection
-            // const collectionRef = collection(database,`Users/${cookies.sessionId}`);
-            const blogRef = doc(database, "blogContent", cookies.sessionId);
-    
-            getDoc(blogRef).then(docsnap=>{
-                const data = docsnap.get('Content');
-                console.log(data);
-                //Updating blog state
-                setBlogArray(arr=>{
-                    return [...arr,...data];
-                });
-
-            }).catch((err)=>{
-                console.log("Unable to fetch data due to: ",err.message);
-            })
-        }
-
-    }
+    const [redirectLogin,setRedirectLogin] = useState(false);
 
 
     //fetching data to get username 
     async function getProfileData(){
-        console.log("Call");
 
         if(cookies.sessionId != undefined && cookies.sessionId != null){
 
@@ -54,10 +30,13 @@ export default function MakePost(){
                 console.log("Unable to fetch data due to: ",err.message);
             })
         }
+        else{
+            alert("Not logged in. Please login");
+            setRedirectLogin(true);
+        }
     }
     useEffect(()=>{
         getProfileData();
-        // getBlogContentArray();
     },[])
 
     //New collection for blog post
@@ -93,8 +72,10 @@ export default function MakePost(){
 
     return(
         <>
-
+            {redirectLogin && <Navigate to="/login"/>}
             {redirectMainBlog && <Navigate to="/"/>}
+
+            <Navbar/>
 
             <h1>Write your blog :</h1>
             <textarea onChange={handleChange} value={textData}></textarea>

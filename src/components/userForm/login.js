@@ -5,7 +5,10 @@ import {database} from "../../firebaseConfig";
 import {collection,getDocs} from "firebase/firestore";
 import { useCookies } from 'react-cookie';
 
+
 export default function Login(){
+    //State for login check
+    const[isLoggedIn,setIsLoggedIn] = useState(false);
 
     //Cookies
     const [cookies,setCookie] = useCookies(['userId']);
@@ -20,6 +23,7 @@ export default function Login(){
     const [userData, setUserData] = useState({
        email: "", password: ""
     });
+
 
     // console.log(userData);
 
@@ -49,6 +53,12 @@ export default function Login(){
 
     const [fetchedUserData,setfetchedUserData] = useState([]);
     useEffect(()=>{
+
+        //Check if user is logged in
+        if(cookies.sessionId != null || cookies.sessionId != undefined){
+            alert("Already logged in. See ya");
+            setIsLoggedIn(true);
+        }
 
         getDocs(collectionRef).then((response)=>{
             const testarr = [];
@@ -99,7 +109,8 @@ export default function Login(){
 
     return(
         <>
-            {redirectLogin && <Navigate to='/'/>}
+            
+            {(redirectLogin || isLoggedIn) && <Navigate to='/'/>}
 
             <form>
                 <h1>Login</h1>

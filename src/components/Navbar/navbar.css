@@ -1,0 +1,9 @@
+.navbar-container{
+    padding:20px 0 10px 20px;
+}
+
+.navbarbox{
+    padding: 10px;
+    text-decoration: none;
+    color: rgb(109, 75, 75);
+}

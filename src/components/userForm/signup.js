@@ -1,10 +1,15 @@
 import {useEffect, useState} from "react";
 // import {validator} from "validator";
 import { Navigate } from "react-router-dom";
-
+import { useCookies } from "react-cookie";
 import {database} from "../../firebaseConfig";
 import {collection, addDoc,getDocs} from "firebase/firestore";
 export default function Signup(){
+    //Cookie
+    const [cookies,setCookie] = useCookies(['userId']);
+
+    const[isLoggedIn,setIsLoggedIn] = useState(false);
+
     //Database Collection
     const  collectionRef = collection(database, 'Users');
 
@@ -84,6 +89,11 @@ export default function Signup(){
     const [fetchedUserData,setfetchedUserData] = useState([]);
     
     useEffect(()=>{
+        //Check if user is logged in
+        if(cookies.sessionId != null || cookies.sessionId != undefined){
+            alert("Already logged in. See ya");
+            setIsLoggedIn(true);
+        }
 
         getDocs(collectionRef).then((response)=>{
             const testarr = [];
@@ -96,6 +106,41 @@ export default function Signup(){
 
     },[]);
     // console.log(fetchedUserData);
+
+    function addUser(){
+        addDoc(collectionRef,{
+            Username: userData.username,
+            Email: userData.email,
+            Password: userData.password,
+        }).then(()=>{
+            alert("Sign up successfull");
+
+            //Resetting userData
+            setUserData(obj=>{
+                return {
+                    ...obj,
+                    username : "",
+                    email : "",
+                    password : ""
+                }
+            });
+
+            //Redirecting to login page
+            setRedirectLogin(true);
+        }).catch((err)=>{
+            alert(err.message);
+            //Resetting userData
+            setUserData(obj=>{
+                return {
+                    ...obj,
+                    username : "",
+                    email : "",
+                    password : ""
+                }
+            });
+
+        });
+    }
 
     
     function handleClick (event){
@@ -115,40 +160,6 @@ export default function Signup(){
 
         //Firebase integration
 
-        function addUser(){
-            addDoc(collectionRef,{
-                Username: userData.username,
-                Email: userData.email,
-                Password: userData.password,
-            }).then(()=>{
-                alert("Sign up successfull");
-    
-                //Resetting userData
-                setUserData(obj=>{
-                    return {
-                        ...obj,
-                        username : "",
-                        email : "",
-                        password : ""
-                    }
-                });
-
-                //Redirecting to login page
-                setRedirectLogin(true);
-            }).catch((err)=>{
-                alert(err.message);
-                //Resetting userData
-                setUserData(obj=>{
-                    return {
-                        ...obj,
-                        username : "",
-                        email : "",
-                        password : ""
-                    }
-                });
-    
-            });
-        }
 
         let isMember = false;
         // Check if the email has already been registered
@@ -171,7 +182,8 @@ export default function Signup(){
 
     return(
         <>
-            {redirectLogin && <Navigate to='/login'/>}
+            {isLoggedIn && <Navigate to='/'/>}
+            {redirectLogin && <Navigate to={'/login'}/>}
 
             <form>
                 <h1>Sign Up</h1>
