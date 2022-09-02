@@ -3,9 +3,10 @@ import {database} from "../../firebaseConfig";
 import {collection,doc, getDoc} from "firebase/firestore";
 import {useState,useEffect} from "react";
 import {Navigate} from "react-router-dom";
+import BlogSection from "./section";
 export default function Blog(){
 
-    const [cookies,setCookie,removeCookie] = useCookies(['userId']);
+    const [cookies,setCookie,removeCookie] = useCookies(['userId']); 
     const [currentUserName, setCurretnUserName] = useState('Guest');
     const [loginData,setloginData] = useState('');
     const [redirectLogin,setRedirectLogin] = useState(false);
@@ -60,7 +61,9 @@ export default function Blog(){
             <h1>Blog Page</h1>
             <h1>Welcome {currentUserName}</h1>
             <button onClick={logOut}>{loginData}</button>
-        
+
+            <BlogSection />
+
         </>
         
     )
