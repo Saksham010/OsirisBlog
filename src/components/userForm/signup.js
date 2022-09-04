@@ -4,6 +4,11 @@ import { Navigate } from "react-router-dom";
 import { useCookies } from "react-cookie";
 import {database} from "../../firebaseConfig";
 import {collection, addDoc,getDocs} from "firebase/firestore";
+import { Notification,Alert,Text} from '@mantine/core';
+import { IconCheck, IconX, IconAlertCircle } from '@tabler/icons';
+import { useSetState } from "@mantine/hooks";
+import { openContextModal } from "@mantine/modals";
+
 export default function Signup(){
     //Cookie
     const [cookies,setCookie] = useCookies(['userId']);
@@ -19,6 +24,11 @@ export default function Signup(){
 
     const [redirectLogin, setRedirectLogin] = useState(false);
     // console.log(userData);
+
+
+    const[mantineLoad,setMantineLoad] = useState(false);
+    const[mantineSignup,setMantineSignup] = useSetState(false);
+    const[mantineRegister,setMantineRegister] = useState(false);
 
     function handleChange(e){
 
@@ -91,8 +101,27 @@ export default function Signup(){
     useEffect(()=>{
         //Check if user is logged in
         if(cookies.sessionId != null || cookies.sessionId != undefined){
-            alert("Already logged in. See ya");
-            setIsLoggedIn(true);
+            // openConfirmModal({
+            //     title: 'Wait a minute',
+            //     children:(
+            //         <Text size="sm">
+            //             You are already logged in. Let me take you to home page.
+            //         </Text>
+            //     ),
+            //     labels: {confirm: "Ok"},
+            //     onConfirm: ()=>  setIsLoggedIn(true)
+
+            // });
+            openContextModal({
+
+                modal: 'loginCheckModal',
+                title: 'Wait a minute',
+                innerProps:{
+                    modalBody:'You are already logged in. Let me redirect you',
+                    redirect: ()=>{setIsLoggedIn(true)}
+                },                
+            });
+            // alert("Already logged in. See ya");
         }
 
         getDocs(collectionRef).then((response)=>{
@@ -113,7 +142,10 @@ export default function Signup(){
             Email: userData.email,
             Password: userData.password,
         }).then(()=>{
-            alert("Sign up successfull");
+            // alert("Sign up successfull");
+            setMantineLoad(false);
+            setMantineSignup(true);
+
 
             //Resetting userData
             setUserData(obj=>{
@@ -126,7 +158,11 @@ export default function Signup(){
             });
 
             //Redirecting to login page
-            setRedirectLogin(true);
+            setTimeout(()=>{
+
+                setRedirectLogin(true);
+
+            },2000);
         }).catch((err)=>{
             alert(err.message);
             //Resetting userData
@@ -145,6 +181,9 @@ export default function Signup(){
     
     function handleClick (event){
         event.preventDefault();
+
+        setMantineLoad(true)
+
 
         // if(validator.isEmail(userData.email)){
         //     alert("The email is not valid");
@@ -173,7 +212,15 @@ export default function Signup(){
                     addUser();
                 }
                 else{
-                    alert("Email already registered try again with new email");                    
+                    // alert("Email already registered try again with new email");   
+                    setTimeout(()=>{
+                        setMantineLoad(false);
+                        setMantineRegister(true);
+                    },1500)
+                    setTimeout(()=>{
+                        setMantineRegister(false);
+                    },3000)
+
                 }
             }
         });
@@ -184,7 +231,7 @@ export default function Signup(){
         <>
             {isLoggedIn && <Navigate to='/'/>}
             {redirectLogin && <Navigate to={'/login'}/>}
-
+            
             <form>
                 <h1>Sign Up</h1>
 
@@ -207,6 +254,26 @@ export default function Signup(){
 
                 
             </form>
+
+            {mantineLoad && 
+            
+            <Notification loading title="Uploading data to server" disallowClose>Signning you up</Notification>
+            }
+
+            {mantineSignup &&
+            
+            <Notification icon={<IconCheck size={18} />} color="teal" title="Signup">
+                Successfull
+            </Notification>    
+    
+            }
+
+
+            {mantineRegister &&             
+            <Alert icon={<IconAlertCircle size={16} />} title="Failed to Signup" color="red">
+                Email already registered
+            </Alert>    
+            }
         </>
 
     )

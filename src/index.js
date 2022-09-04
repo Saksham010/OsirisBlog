@@ -5,12 +5,30 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { BrowserRouter } from 'react-router-dom';
 import { CookiesProvider } from "react-cookie";
+import { MantineProvider,Text,Button } from '@mantine/core';
+import { ModalsProvider,ContextModalProps } from '@mantine/modals';
+import { NotificationsProvider } from '@mantine/notifications';
+const TestModal = ({ context, id, innerProps }) => (
+  <>
+    <Text size="sm">{innerProps.modalBody}</Text>
+    <Button fullWidth mt="md" onClick={() => {context.closeModal(id); innerProps.redirect()}}>
+      Ok
+    </Button>
+  </>
+);
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <BrowserRouter>
 
     <CookiesProvider>
-      <App />
+      <MantineProvider withGlobalStyles withNormalizeCSS>
+        <ModalsProvider modals={{loginCheckModal: TestModal}}>
+          <NotificationsProvider>
+            <App />
+          </NotificationsProvider>
+        </ModalsProvider>
+      </MantineProvider>
     </CookiesProvider>
     
   </BrowserRouter>

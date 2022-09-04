@@ -4,6 +4,9 @@ import {collection,doc, getDoc, addDoc} from "firebase/firestore";
 import { useCookies } from 'react-cookie';
 import { Navigate } from "react-router-dom";
 import Navbar from "../Navbar/Navbar";
+import { openContextModal } from "@mantine/modals";
+import { showNotification, updateNotification } from '@mantine/notifications';
+import { IconCheck } from '@tabler/icons';
 
 export default function MakePost(){
 
@@ -31,8 +34,17 @@ export default function MakePost(){
             })
         }
         else{
-            alert("Not logged in. Please login");
-            setRedirectLogin(true);
+            openContextModal({
+
+                modal: 'loginCheckModal',
+                title: 'Sorry',
+                innerProps:{
+                    modalBody:'You need to login to write a blog',
+                    redirect: ()=>{setRedirectLogin(true)}
+                },                
+            }); 
+            // alert("Not logged in. Please login");
+            // setRedirectLogin(true);
         }
     }
     useEffect(()=>{
@@ -42,17 +54,41 @@ export default function MakePost(){
     //New collection for blog post
     const collectionRef = collection(database, "blogContent");
     function submitBlog(){
+        //Mantine notification
+        showNotification({
+            id: 'load-data',
+            loading: true,
+            title: 'Uploading your blog',
+            message: 'Your blog is being uploaded to the server',
+            autoClose:false,
+            disallowClose: true,
+        });
+
         addDoc(collectionRef,{
             Author: authorName,
             Content: textData,
         }).then(()=>{
-            alert("Blog succesfully posted");
+            setTimeout(()=>{
 
-            //Resetting blog text data
-            setTextData("");
+                updateNotification({
+                    id: 'load-data',
+                    color: 'teal',
+                    title: 'Success',
+                    message: 'Your blog has been successfully uploaded',
+                    icon: <IconCheck size={16} />,
+                    autoClose: 2000,
+                  });
+                //Resetting blog text data
+
+                setTextData("");
+
+            },1000)
+            
+            setTimeout(()=>{
+                setRedirectMainBlog(true);
+            },1700);
 
            //Redirecting to login page
-            setRedirectMainBlog(true);
         }).catch((err)=>{
             alert(err.message);
             //Resetting blog text data

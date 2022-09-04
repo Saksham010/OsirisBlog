@@ -4,6 +4,9 @@ import { Navigate } from "react-router-dom";
 import {database} from "../../firebaseConfig";
 import {collection,getDocs} from "firebase/firestore";
 import { useCookies } from 'react-cookie';
+import { Notification,Alert} from '@mantine/core';
+import { IconCheck, IconX, IconAlertCircle } from '@tabler/icons';
+import { openContextModal } from "@mantine/modals";
 
 
 export default function Login(){
@@ -23,6 +26,10 @@ export default function Login(){
     const [userData, setUserData] = useState({
        email: "", password: ""
     });
+
+
+    const[mantineLoginCheck, setMantineLoginCheck] = useState(false);
+    const[mantineLoginError,setMantineLoginError] = useState(false);
 
 
     // console.log(userData);
@@ -56,8 +63,15 @@ export default function Login(){
 
         //Check if user is logged in
         if(cookies.sessionId != null || cookies.sessionId != undefined){
-            alert("Already logged in. See ya");
-            setIsLoggedIn(true);
+            openContextModal({
+
+                modal: 'loginCheckModal',
+                title: 'Wait a minute',
+                innerProps:{
+                    modalBody:'You are already logged in. Let me redirect you',
+                    redirect: ()=>{setIsLoggedIn(true)}
+                },                
+            });            
         }
 
         getDocs(collectionRef).then((response)=>{
@@ -97,12 +111,21 @@ export default function Login(){
                 setCookie('sessionId',obj.id,{path: '/'});
 
                 //Alert the user
-                alert("Login successfull");
+                // alert("Login successfull");
+                setMantineLoginCheck(true);
 
-                setRedirectLogin(true);
+                setTimeout(()=>{
+
+                    setRedirectLogin(true);
+                },2000)
             }
             if(i+1 == fetchedUserData.length && loginStatus != true){
-                alert("Wrong email or password. Try again");
+                // alert("Wrong email or password. Try again");
+                setMantineLoginError(true);
+
+                setTimeout(()=>{
+                    setMantineLoginError(false);
+                },2000)
             }
         })
     }
@@ -111,8 +134,10 @@ export default function Login(){
         <>
             
             {(redirectLogin || isLoggedIn) && <Navigate to='/'/>}
-
+     
             <form>
+
+
                 <h1>Login</h1>
 
                 <div>
@@ -129,6 +154,22 @@ export default function Login(){
 
                 
             </form>
+
+            {mantineLoginCheck &&  
+            <Notification icon={<IconCheck size={18} />} color="teal" title="Login" disallowClose>
+                    Successfull
+            </Notification> 
+
+            }
+
+            {mantineLoginError &&
+
+
+            <Alert icon={<IconAlertCircle size={16} />} title="Failed to Login" color="red">
+                Wrong Email or Password. Try again
+            </Alert>    
+            }
+
         </>
 
     )
