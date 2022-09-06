@@ -7,6 +7,7 @@ import Navbar from "../Navbar/Navbar";
 import { openContextModal } from "@mantine/modals";
 import { showNotification, updateNotification } from '@mantine/notifications';
 import { IconCheck } from '@tabler/icons';
+import { RichTextEditor } from '@mantine/rte';
 
 export default function MakePost(){
 
@@ -15,11 +16,12 @@ export default function MakePost(){
     const [textData, setTextData] = useState("");
     const [redirectMainBlog,setRedirectMainBlog] = useState(false);     
     const [redirectLogin,setRedirectLogin] = useState(false);
+    const [unparsedData,setUnparsedData] = useState(""); //Unparsed data
 
 
     //fetching data to get username 
     async function getProfileData(){
-
+        
         if(cookies.sessionId != undefined && cookies.sessionId != null){
 
             // Database Collection
@@ -51,9 +53,51 @@ export default function MakePost(){
         getProfileData();
     },[])
 
-    //New collection for blog post
     const collectionRef = collection(database, "blogContent");
+    useEffect(()=>{
+
+        if(textData != ""){
+            console.log("Tis is prior texDTAt check",textData);
+
+            addDoc(collectionRef,{
+                Author: authorName,
+                Content: textData,
+            }).then(()=>{
+                setTimeout(()=>{
+    
+                    updateNotification({
+                        id: 'load-data',
+                        color: 'teal',
+                        title: 'Success',
+                        message: 'Your blog has been successfully uploaded',
+                        icon: <IconCheck size={16} />,
+                        autoClose: 2000,
+                        });
+                    //Resetting blog text data
+    
+                    // setTextData("");
+    
+                },1000)
+                
+                setTimeout(()=>{
+                    setRedirectMainBlog(true);
+                },1700);
+    
+                //Redirecting to login page
+            }).catch((err)=>{
+                alert(err.message);
+                //Resetting blog text data
+                setTextData("");
+    
+            });
+        }
+    },[textData])
+
+    //New collection for blog post
     function submitBlog(){
+        //Parsing data
+        parseData();
+                
         //Mantine notification
         showNotification({
             id: 'load-data',
@@ -64,47 +108,55 @@ export default function MakePost(){
             disallowClose: true,
         });
 
-        addDoc(collectionRef,{
-            Author: authorName,
-            Content: textData,
-        }).then(()=>{
-            setTimeout(()=>{
 
-                updateNotification({
-                    id: 'load-data',
-                    color: 'teal',
-                    title: 'Success',
-                    message: 'Your blog has been successfully uploaded',
-                    icon: <IconCheck size={16} />,
-                    autoClose: 2000,
-                  });
-                //Resetting blog text data
-
-                setTextData("");
-
-            },1000)
-            
-            setTimeout(()=>{
-                setRedirectMainBlog(true);
-            },1700);
-
-           //Redirecting to login page
-        }).catch((err)=>{
-            alert(err.message);
-            //Resetting blog text data
-            setTextData("");
-
-        });
     }
 
     
-    function handleChange(event){
-        // console.log(event.target.value);
-        let textData = event.target.value;
-        setTextData(textData);
+    function parseData(){
+        let data = [];
+        let isTagOpen = false;
+        let strLength = unparsedData.length;
+
+        //Parsing html
+        let i =0;
+        while(true){
+            //Last index
+            if(i == strLength-1){
+                //Joining parsed data
+                let finalData = data.join("");
+                console.log("This is data at this point: ",data.join(""));
+                setTextData(finalData);            
+
+                break;
+            }
+            if(unparsedData[i] == '<'){
+                isTagOpen = true;
+                i++;
+                continue;
+            }
+            if( unparsedData[i] == '>'){
+                isTagOpen = false;
+                i++;
+                continue;
+            }
+            if(isTagOpen == true){
+                i++;
+                continue;
+            }
+            if(isTagOpen == false){
+                data.push(unparsedData[i]);
+
+            }
+            
+            i++;
+        }
 
 
     }
+
+    // console.log(unparsedData);
+    // console.log(textData);
+
 
     return(
         <>
@@ -114,7 +166,8 @@ export default function MakePost(){
             <Navbar/>
 
             <h1>Write your blog :</h1>
-            <textarea onChange={handleChange} value={textData}></textarea>
+
+            <RichTextEditor value={unparsedData} onChange={setUnparsedData}/>
             <button onClick={submitBlog}>Submit</button>
 
         </>
